@@ -5,13 +5,18 @@ extends CharacterBody2D
 ## hitbox, and is physically solid on the World layer — which means a
 ## Galdur ward (also World-layer) blocks its patrol like any other wall.
 ## That's the ward's combat use: cast one in an enemy's path and it has to
-## stop or turn around, same as hitting the edge of a platform.
+## stop or turn around, same as hitting the edge of a platform. Dies to two
+## hits from a Wizardry mote, the player's only offense so far.
+
+signal died
 
 const SPEED := 60.0
 const GRAVITY := 1200.0
 const DAMAGE := 1
 const HIT_COOLDOWN := 0.6
+const MAX_HEALTH := 2
 
+var health := MAX_HEALTH
 var _dir := -1.0
 var _patrol_min := 0.0
 var _patrol_max := 0.0
@@ -21,6 +26,7 @@ var _hit_timer := 0.0
 func setup(patrol_min: float, patrol_max: float) -> void:
 	_patrol_min = patrol_min
 	_patrol_max = patrol_max
+	add_to_group("enemy")
 	collision_layer = LevelBuilder.LAYER_ENEMY
 	collision_mask = LevelBuilder.LAYER_WORLD
 
@@ -78,3 +84,10 @@ func _on_hitbox_entered(body: Node) -> void:
 	if body.has_method("take_damage"):
 		body.take_damage(DAMAGE)
 		_hit_timer = HIT_COOLDOWN
+
+
+func take_damage(amount: int) -> void:
+	health -= amount
+	if health <= 0:
+		died.emit()
+		queue_free()

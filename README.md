@@ -5,7 +5,7 @@ automaton. Design background and interactive prototypes for all six schools
 live in the linked artifacts from the design conversation (Sigil Loom, then
 Six Grammars) — this repo is where that design becomes an actual game.
 
-## Status: vertical slice, 3 of 6 schools playable, first combat
+## Status: vertical slice, 3 of 6 schools playable, first combat (both ways)
 
 - **Godot 4.x**, GDScript, 2D.
 - **Galdur** (rune-ring), **Smithcraft** (ore-vein), and **Wizardry**
@@ -13,8 +13,10 @@ Six Grammars) — this repo is where that design becomes an actual game.
   automata as the prototypes.
 - **Sorcery, Seiðr, Hamr** are designed (see the artifacts) but not yet
   built into the game.
-- First enemy and contact damage are in, with a real collision-layer setup
-  (World / Player / Enemy / Hazard) — see "Collision layers" below.
+- First enemy, contact damage, and a real collision-layer setup (World /
+  Player / Enemy / Hazard) — see "Combat and collision layers" below.
+  Wizardry now damages enemies as well as switches, so the player has an
+  actual offense, not just Galdur's wall.
 - Art is placeholder greybox geometry — flat-colored rectangles, no sprites
   yet. Godot 4 was chosen for the 2D metroidvania toolchain; pixel art is
   the target style once an art pass starts.
@@ -81,9 +83,12 @@ of walking or jumping can do.
   being a genuine state-dependent automaton, not a raycast. Its trail is
   drawn by a separate `WizardryBeam` node anchored to the world, not the
   player, so it doesn't visually drag along if the caster moves afterward.
-  `WizardrySwitch` nodes fire when the mote's path passes within range,
-  independent of physics collision — which is how it reaches switches
-  behind gates the player's own body can't get through.
+  `WizardrySwitch` nodes fire, and enemies in the `"enemy"` group take
+  damage, when the mote's path passes within range — independent of
+  physics collision, which is how it reaches switches behind gates the
+  player's own body can't get through. Each enemy can only be hit once per
+  cast (tracked per-cast, not a cooldown) so a slow-moving target doesn't
+  eat two hits from consecutive steps of the same shot.
 
 `scripts/world/LevelBuilder.gd` holds the shared greybox helpers
 (`make_platform`, `make_trigger`, `make_switch`) the level scripts and
@@ -94,7 +99,10 @@ abilities all use.
 First enemy is `scripts/world/Enemy.gd`: a ground patroller that turns
 around at its patrol bounds or when it hits a wall, and deals contact
 damage through a small Hazard-layer hitbox with a per-hit cooldown so it
-doesn't chip the player every physics frame.
+doesn't chip the player every physics frame. It has 2 HP and dies to two
+separate Wizardry hits (`take_damage()` -> `queue_free()` at 0), which is
+currently the player's only way to actually kill something rather than
+just block or avoid it.
 
 Physics layers are named in `project.godot` and used explicitly everywhere
 (`LevelBuilder.LAYER_WORLD/PLAYER/ENEMY/HAZARD`) rather than left on Godot's
@@ -122,13 +130,17 @@ caught by running Godot headless (`godot --headless --path . <scene>
 --quit-after N`) with a temporary autoloaded driver script that injects
 real input events (`Input.parse_input_event`, `Input.action_press`) and
 prints state — not just static code review. That's how the trigger
-self-firing loop, the Smithcraft spawn-on-player pop, and the fact that
-Galdur's ward could never actually block anything (see above) all got
-caught before being handed back — the last one in particular only showed up
-once an enemy existed to test against; it wasn't visible from reading the
-code. The driver script itself is never committed; if you're picking up
-this pattern, add it under `scripts/test/`, wire it as a temporary autoload
-in `project.godot`, and remove both before committing. For a level-geometry
+self-firing loop, the Smithcraft spawn-on-player pop, the fact that
+Galdur's ward could never actually block anything, and Wizardry's
+enemy-hit radius being too tight to reliably land (the mote travels 8px
+below the caster's feet, an enemy's `global_position` is at *its* feet, and
+that vertical gap plus 16px grid-quantized horizontal steps pushed the
+worst-case combined distance past the original 10px radius) all got caught
+before being handed back — none of them were visible from reading the code
+alone, only from watching numbers move against a scripted scenario. The
+driver script itself is never committed; if you're picking up this
+pattern, add it under `scripts/test/`, wire it as a temporary autoload in
+`project.godot`, and remove both before committing. For a level-geometry
 test that isn't one of the three real scenes, add a throwaway scene the
 same way and delete it afterward too.
 
@@ -149,6 +161,11 @@ same way and delete it afterward too.
   depenetration (the enemy doesn't avoid the player, only World-layer
   geometry) — reads as acceptable knockback for now, but it's incidental,
   not a designed knockback effect.
+- Wizardry's per-cast hit is reliable against an approaching or stationary
+  target but not perfectly consistent against one drifting a few pixels
+  within a very small range — a real gap, not just an artifact of the
+  tight test scenario that found it, but low priority since the actual
+  in-game enemy patrols across a much wider range than that edge case.
 
 ## Next steps
 
@@ -157,5 +174,7 @@ Pick one:
    visual departure so far — spreading terrain transmutation instead of a
    single ability-gate payoff).
 2. Start the pixel-art pass on the player, the three worlds, and the enemy.
-3. Give the player a way to fight back (Sorcery or Wizardry could plausibly
-   double as offense) instead of only being able to wall enemies off.
+3. Add a second enemy type or a ranged attack, now that there's a working
+   damage pipeline (Hazard layer for enemies hitting the player, group +
+   `take_damage()` for the player hitting enemies) to build more encounters
+   on top of.
