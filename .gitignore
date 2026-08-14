@@ -1,0 +1,12 @@
+# Godot 4 local editor cache and imports
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
+# Imported/generated assets
+*.translation
+*.import
+
+# OS
+.DS_Store

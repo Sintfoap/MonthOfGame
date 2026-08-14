@@ -1,0 +1,10 @@
+config_version=5
+
+[application]
+
+config/name="The Unweaving of Yggdrasil"
+run/main_scene="res://scenes/Midgard.tscn"
+
+[autoload]
+
+PlayerState="*res://scripts/PlayerState.gd"
