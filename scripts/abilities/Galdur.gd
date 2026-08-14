@@ -3,18 +3,22 @@ extends Node2D
 ## Galdur: an elementary cellular automaton wrapped in a ring, exactly like
 ## the one in the "Six Grammars" prototype. When it finishes growing, the
 ## final ring's density decides the size and lifetime of a temporary rune
-## ward — a stepping-stone platform, not a projectile.
+## ward — a stepping-stone platform ahead of the caster, and (since it's
+## solid on the World layer, same as any wall) a real obstacle to whatever
+## is walking toward them.
 
 const RING_SIZE := 48
 const MAX_GEN := 10
 const RULE_NUMBER := 30
 const GEN_INTERVAL := 0.04
+const FORWARD_OFFSET := 80.0  # clears the ward's own max half-width (65px)
 
 var _rule_table: Array = []
 var _ring: Array = []
 var _growing := false
 var _timer := 0.0
 var _generation := 0
+var _facing := 1.0
 
 
 func _ready() -> void:
@@ -29,7 +33,8 @@ func _compute_rule_table(num: int) -> Array:
 	return table
 
 
-func cast() -> void:
+func cast(facing: float = 1.0) -> void:
+	_facing = facing
 	_ring.resize(RING_SIZE)
 	for i in range(RING_SIZE):
 		_ring[i] = 0
@@ -74,9 +79,14 @@ func _resolve_ward() -> void:
 	var radius := 40.0 + density * 90.0
 	var duration := 1.0 + density * 1.6
 
+	# Ahead of the caster and at foot height, not below -- a caster
+	# standing on solid ground has nothing but more solid ground beneath
+	# them, so a ward placed there would spawn embedded in it, unreachable
+	# by anything walking at ground level. FORWARD_OFFSET clears the
+	# player's own collision box even at the ward's widest.
 	var body := LevelBuilder.make_platform(
 		get_tree().current_scene,
-		global_position + Vector2(0, 10),
+		global_position + Vector2(_facing * FORWARD_OFFSET, 0),
 		Vector2(radius, 12),
 		Color(0.73, 0.56, 0.26, 0.9)
 	)

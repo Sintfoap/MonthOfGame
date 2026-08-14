@@ -6,6 +6,9 @@ extends StaticBody2D
 
 
 func setup(cell_size: float) -> void:
+	collision_layer = LevelBuilder.LAYER_WORLD
+	collision_mask = 0
+
 	var shape := RectangleShape2D.new()
 	shape.size = Vector2(cell_size, cell_size)
 	var collision := CollisionShape2D.new()
