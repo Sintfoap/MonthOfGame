@@ -15,7 +15,7 @@ func _ready() -> void:
 
 	LevelBuilder.make_trigger(
 		self, Vector2(-100, 272), Vector2(48, 16), Color(0.55, 0.42, 0.18, 0.6),
-		func(_body): get_tree().change_scene_to_file("res://scenes/Svartalfheim.tscn")
+		func(_body): get_tree().change_scene_to_file.call_deferred("res://scenes/Svartalfheim.tscn")
 	)
 
 	var player := PLAYER_SCENE.instantiate()
