@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/Player.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/abilities/Galdur.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/abilities/Smithcraft.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/abilities/Wizardry.gd" id="4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(24, 40)
@@ -23,3 +24,6 @@ script = ExtResource("2")
 
 [node name="SmithcraftAbility" type="Node" parent="."]
 script = ExtResource("3")
+
+[node name="WizardryAbility" type="Node" parent="."]
+script = ExtResource("4")

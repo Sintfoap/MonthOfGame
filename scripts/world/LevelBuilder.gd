@@ -57,3 +57,11 @@ static func make_trigger(parent: Node, pos: Vector2, size: Vector2, color: Color
 	)
 	parent.add_child(area)
 	return area
+
+
+static func make_switch(parent: Node, pos: Vector2, color: Color, on_trigger: Callable) -> WizardrySwitch:
+	var sw := WizardrySwitch.new()
+	sw.setup(pos, color)
+	sw.triggered.connect(on_trigger)
+	parent.add_child(sw)
+	return sw
