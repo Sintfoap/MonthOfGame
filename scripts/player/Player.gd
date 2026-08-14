@@ -42,4 +42,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		galdur.cast()
 	elif event.keycode == KEY_K and PlayerState.has_smithcraft:
 		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
-		smithcraft.cast(global_position, Vector2(facing, 0.0))
+		# Offset ahead of and below the player's feet so the seed cell
+		# doesn't spawn on top of the player's own collision shape.
+		var origin := global_position + Vector2(facing * 24.0, 8.0)
+		smithcraft.cast(origin, Vector2(facing, 0.0))

@@ -47,6 +47,13 @@ static func make_trigger(parent: Node, pos: Vector2, size: Vector2, color: Color
 	var collision := CollisionShape2D.new()
 	collision.shape = shape
 	area.add_child(collision)
-	area.body_entered.connect(on_enter)
+	# Area2D.body_entered fires for any PhysicsBody2D that overlaps it,
+	# including the ground platforms this trigger sits on top of — filter
+	# to the player so the trigger doesn't fire itself the instant the
+	# level loads.
+	area.body_entered.connect(func(body):
+		if body is CharacterBody2D:
+			on_enter.call(body)
+	)
 	parent.add_child(area)
 	return area
