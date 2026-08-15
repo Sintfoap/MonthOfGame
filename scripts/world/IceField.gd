@@ -113,8 +113,8 @@ func _set_fire(i: int) -> void:
 	var body: StaticBody2D = cells[i]
 	if is_instance_valid(body):
 		for child in body.get_children():
-			if child is Polygon2D:
-				child.color = FIRE_COLOR
+			if child is Sprite2D:
+				child.modulate = FIRE_COLOR
 
 
 func _clear_cell(i: int) -> void:

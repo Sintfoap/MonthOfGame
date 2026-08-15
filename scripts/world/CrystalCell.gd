@@ -23,10 +23,4 @@ func setup(cell_size: float) -> void:
 	collision.shape = shape
 	add_child(collision)
 
-	var visual := Polygon2D.new()
-	visual.color = Color(0.24, 0.52, 0.47)
-	var h := cell_size / 2.0
-	visual.polygon = PackedVector2Array([
-		Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h)
-	])
-	add_child(visual)
+	LevelBuilder.tile_sprites(self, Vector2(cell_size, cell_size), Color(0.24, 0.52, 0.47))

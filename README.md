@@ -20,9 +20,9 @@ Six Grammars) — this repo is where that design becomes an actual game.
 - Player-built structures (currently just Smithcraft's crystal veins)
   persist across leaving and returning to a level — see "World state
   persistence" below.
-- Art is placeholder greybox geometry — flat-colored rectangles, no sprites
-  yet. Godot 4 was chosen for the 2D metroidvania toolchain; pixel art is
-  the target style once an art pass starts.
+- Filler pixel art is in for the player, the enemy, and all world geometry
+  — see "Placeholder art and the ship guard" below, including how a
+  release export is made to refuse to run while it's still in place.
 - Verified by running the project headless (`godot --headless`) with
   simulated input, not just read — see "How this gets tested" below.
 
@@ -150,6 +150,54 @@ It also only covers Smithcraft right now — nothing else in the game
 currently builds persistent structures the same way, but if one does
 later, the same pattern applies.
 
+## Placeholder art and the ship guard
+
+`assets/placeholder/` holds four small pixel-art files: `block.png` (a
+16px tile, tinted per call site — see below), `player_idle.png`,
+`player_walk.png`, and `enemy.png`. They're deliberately simple, filler
+quality, generated rather than hand-drawn — meant to look like *something*
+in the world instead of flat colored rectangles, not to look finished.
+
+**The tinting trick:** every solid platform, gate, ward, crystal cell, and
+ice cell already had a `color` argument before this pass (that's what made
+a ward read as brass and a gate read as purple against flat rectangles).
+`LevelBuilder.tile_sprites()` covers a given area in copies of
+`block.png`, clipping the edge tiles so non-16px-multiple sizes (most
+platforms) get exact coverage instead of overhanging, and applies that
+same `color` as each tile's `modulate`. `block.png` is drawn near-white
+specifically so multiplying by a tint reproduces it predictably — white
+times a color is that color. This is why adding real art didn't require
+touching `Galdur.gd`, `Midgard.gd`, `IceField.gd`'s cell creation, or any
+other call site: they were already passing a color, and now that color
+tints pixel art instead of filling a polygon.
+
+**Getting your own art in:** replace the four files in
+`assets/placeholder/` in place (same filenames, same rough dimensions —
+16x16 for `block.png`, 24x40 for the player frames, 20x28 for `enemy.png`)
+and the whole game picks it up with no code changes. If you want different
+dimensions or additional frames (a real walk cycle, an idle animation),
+the sprite setup is in `Player.gd`'s `_ready()`/`_physics_process()` and
+`Enemy.gd`'s `setup()` — both are a handful of lines.
+
+**The ship guard:** `scripts/ArtStatus.gd` holds one constant,
+`USING_PLACEHOLDER_ART`, currently `true`. `scripts/AssetGuard.gd`
+(autoload, first in the list) checks it against `OS.is_debug_build()` —
+true from the editor and debug exports, false only for a real release
+export — and if placeholder art is still marked active in a release build,
+it refuses to run: prints an error and quits immediately. Flip
+`USING_PLACEHOLDER_ART` to `false` once every placeholder file above has
+been replaced, and a release export will boot normally.
+
+Worth knowing: this could only be partly verified in the environment it
+was built in. There's no display and no export templates installed here,
+so there was no way to actually produce a release export and confirm the
+`quit()` path fires end to end. What *was* confirmed headlessly is that
+the guard does nothing and doesn't interfere with normal play whenever
+`OS.is_debug_build()` is true — every case reachable without a real
+export, including everything in "How this gets tested" below. Treat the
+release-blocking path as reviewed, not proven; worth one real test export
+to confirm before leaning on it completely.
+
 ## Combat and collision layers
 
 First enemy is `scripts/world/Enemy.gd`: a ground patroller that turns
@@ -204,6 +252,15 @@ temporary autoload in `project.godot`, and remove both before committing.
 For a level-geometry test that isn't one of the real scenes, add a
 throwaway scene the same way and delete it afterward too.
 
+One import quirk worth knowing if you're scripting headless tests the same
+way: on a genuinely fresh `.godot` cache, a single `--headless --import`
+pass isn't always enough — scripts that `preload()` a texture can compile
+before that texture's own import finishes, throwing parse errors on
+resources that are completely fine a moment later. A second `--import`
+pass immediately after the first clears it. Real editor sessions handle
+this more gracefully on their own; it only showed up here because of the
+one-shot CLI-only workflow.
+
 ## Known simplifications (expected — this is a first scaffold)
 
 - One enemy type, no ranged attacks, no death animation — contact damage
@@ -236,6 +293,9 @@ throwaway scene the same way and delete it afterward too.
   to "just this part of it" — `cast()` ignites every IceField in the
   scene. Fine while each level only ever has one, not fine the moment a
   level has two and the player only meant to light one.
+- The placeholder-art guard's release-blocking path is reviewed but not
+  proven — see "Placeholder art and the ship guard" above for exactly what
+  was and wasn't verifiable in this environment.
 
 ## Next steps
 
@@ -243,11 +303,13 @@ Pick one:
 1. Build a fifth school (Seiðr's voter-model consensus would be the first
    non-physical output in the game — information/curse instead of
    traversal, structure, or damage).
-2. Start the pixel-art pass on the player, the four worlds, and the enemy.
-3. Add a second enemy type or a ranged attack, now that there's a working
+2. Add a second enemy type or a ranged attack, now that there's a working
    damage pipeline (Hazard layer for enemies hitting the player, group +
    `take_damage()` for the player hitting enemies) to build more encounters
    on top of.
-4. Extend `WorldState` persistence to cover more than Smithcraft — enemy
+3. Extend `WorldState` persistence to cover more than Smithcraft — enemy
    deaths and melted ice fields are the two known gaps, and both would
    matter more as soon as a player can double back through more of the map.
+4. Do a real release export once, purely to confirm the placeholder-art
+   guard's `quit()` path actually fires — the one piece of this session's
+   work that couldn't be verified from inside this environment.

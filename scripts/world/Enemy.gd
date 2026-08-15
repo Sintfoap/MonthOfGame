@@ -15,8 +15,10 @@ const GRAVITY := 1200.0
 const DAMAGE := 1
 const HIT_COOLDOWN := 0.6
 const MAX_HEALTH := 2
+const SPRITE_TEXTURE := preload("res://assets/placeholder/enemy.png")
 
 var health := MAX_HEALTH
+var sprite: Sprite2D
 var _dir := -1.0
 var _patrol_min := 0.0
 var _patrol_max := 0.0
@@ -37,12 +39,10 @@ func setup(patrol_min: float, patrol_max: float) -> void:
 	collision.position = Vector2(0, -14)
 	add_child(collision)
 
-	var visual := Polygon2D.new()
-	visual.color = Color(0.62, 0.22, 0.24)
-	visual.polygon = PackedVector2Array([
-		Vector2(-10, -28), Vector2(10, -28), Vector2(10, 0), Vector2(-10, 0)
-	])
-	add_child(visual)
+	sprite = Sprite2D.new()
+	sprite.texture = SPRITE_TEXTURE
+	sprite.position = Vector2(0, -14)
+	add_child(sprite)
 
 	var hitbox := Area2D.new()
 	hitbox.collision_layer = LevelBuilder.LAYER_HAZARD
@@ -66,6 +66,7 @@ func _physics_process(delta: float) -> void:
 		_dir = 1.0
 	elif global_position.x >= _patrol_max:
 		_dir = -1.0
+	sprite.flip_h = _dir < 0.0
 
 	move_and_slide()
 

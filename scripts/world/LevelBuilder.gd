@@ -1,14 +1,20 @@
 class_name LevelBuilder
 extends RefCounted
 
-## Greybox helpers shared by every level script. No art assets yet —
-## platforms and triggers are plain colored rectangles until a pixel-art
-## pass replaces them.
+## Greybox helpers shared by every level script. World geometry (see
+## make_platform) is rendered with placeholder pixel-art tiles, tinted per
+## call site by the same `color` every caller already passed for the old
+## flat-rectangle look -- a ward stays brass, a gate stays purple, ground
+## stays dark, no call site needed to change. Trigger markers stay flat
+## color rectangles; they're gameplay indicators, not environment art.
 
 const LAYER_WORLD := 1
 const LAYER_PLAYER := 2
 const LAYER_ENEMY := 4
 const LAYER_HAZARD := 8
+
+const TILE_SIZE := 16.0
+const BLOCK_TEXTURE := preload("res://assets/placeholder/block.png")
 
 
 static func make_platform(parent: Node, pos: Vector2, size: Vector2, color: Color) -> StaticBody2D:
@@ -23,17 +29,33 @@ static func make_platform(parent: Node, pos: Vector2, size: Vector2, color: Colo
 	collision.shape = shape
 	body.add_child(collision)
 
-	var visual := Polygon2D.new()
-	visual.color = color
-	var hw := size.x / 2.0
-	var hh := size.y / 2.0
-	visual.polygon = PackedVector2Array([
-		Vector2(-hw, -hh), Vector2(hw, -hh), Vector2(hw, hh), Vector2(-hw, hh)
-	])
-	body.add_child(visual)
+	tile_sprites(body, size, color)
 
 	parent.add_child(body)
 	return body
+
+
+## Covers a `size`-shaped area centered on the parent's origin with tiled
+## copies of the placeholder block texture, clipping the edge tiles so
+## non-16px-multiple sizes (most platforms) get exact pixel coverage
+## instead of overhanging past their own collision box.
+static func tile_sprites(parent: Node2D, size: Vector2, color: Color) -> void:
+	var cols := int(ceil(size.x / TILE_SIZE))
+	var rows := int(ceil(size.y / TILE_SIZE))
+	var hw := size.x / 2.0
+	var hh := size.y / 2.0
+	for ry in range(rows):
+		for rx in range(cols):
+			var tile_w := minf(TILE_SIZE, size.x - rx * TILE_SIZE)
+			var tile_h := minf(TILE_SIZE, size.y - ry * TILE_SIZE)
+			var sprite := Sprite2D.new()
+			sprite.texture = BLOCK_TEXTURE
+			sprite.centered = false
+			sprite.region_enabled = true
+			sprite.region_rect = Rect2(0, 0, tile_w, tile_h)
+			sprite.position = Vector2(-hw + rx * TILE_SIZE, -hh + ry * TILE_SIZE)
+			sprite.modulate = color
+			parent.add_child(sprite)
 
 
 static func make_trigger(parent: Node, pos: Vector2, size: Vector2, color: Color, on_enter: Callable) -> Area2D:

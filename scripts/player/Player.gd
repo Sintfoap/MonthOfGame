@@ -5,10 +5,16 @@ const JUMP_VELOCITY := -420.0
 const GRAVITY := 1200.0
 const MAX_HEALTH := 3
 const INVULNERABLE_TIME := 1.0
+const WALK_FRAME_TIME := 0.2
+
+const IDLE_TEXTURE := preload("res://assets/placeholder/player_idle.png")
+const WALK_TEXTURE := preload("res://assets/placeholder/player_walk.png")
+const NORMAL_TINT := Color(1, 1, 1)
+const HURT_TINT := Color(1, 0.5, 0.5)
 
 signal died
 
-@onready var sprite: Polygon2D = $Sprite
+@onready var sprite: Sprite2D = $Sprite
 @onready var galdur: Node2D = $GaldurAbility
 @onready var smithcraft: Node = $SmithcraftAbility
 @onready var wizardry: Node = $WizardryAbility
@@ -16,16 +22,17 @@ signal died
 
 var health := MAX_HEALTH
 var _invulnerable_timer := 0.0
+var _facing := 1.0
+var _walk_timer := 0.0
+var _walk_frame := false
 
 
 func _ready() -> void:
 	collision_layer = LevelBuilder.LAYER_PLAYER
 	collision_mask = LevelBuilder.LAYER_WORLD | LevelBuilder.LAYER_ENEMY
 
-	sprite.color = Color(0.86, 0.8, 0.62)
-	sprite.polygon = PackedVector2Array([
-		Vector2(-12, -40), Vector2(12, -40), Vector2(12, 0), Vector2(-12, 0)
-	])
+	sprite.texture = IDLE_TEXTURE
+	sprite.position = Vector2(0, -20)
 
 
 func _physics_process(delta: float) -> void:
@@ -40,16 +47,25 @@ func _physics_process(delta: float) -> void:
 	var direction := Input.get_axis("ui_left", "ui_right")
 	if direction != 0.0:
 		velocity.x = direction * SPEED
-		sprite.scale.x = 1.0 if direction > 0.0 else -1.0
+		_facing = 1.0 if direction > 0.0 else -1.0
+		sprite.flip_h = _facing < 0.0
+		_walk_timer += delta
+		if _walk_timer >= WALK_FRAME_TIME:
+			_walk_timer = 0.0
+			_walk_frame = not _walk_frame
+			sprite.texture = WALK_TEXTURE if _walk_frame else IDLE_TEXTURE
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+		_walk_timer = 0.0
+		_walk_frame = false
+		sprite.texture = IDLE_TEXTURE
 
 	move_and_slide()
 
 	if _invulnerable_timer > 0.0:
 		_invulnerable_timer -= delta
 		if _invulnerable_timer <= 0.0:
-			sprite.color = Color(0.86, 0.8, 0.62)
+			sprite.modulate = NORMAL_TINT
 
 
 func take_damage(amount: int) -> void:
@@ -57,7 +73,7 @@ func take_damage(amount: int) -> void:
 		return
 	health -= amount
 	_invulnerable_timer = INVULNERABLE_TIME
-	sprite.color = Color(0.9, 0.35, 0.35)
+	sprite.modulate = HURT_TINT
 	if health <= 0:
 		died.emit()
 		# Deferred: this can be called from an Area2D's body_entered, which
@@ -70,17 +86,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 	if event.keycode == KEY_J:
-		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
-		galdur.cast(facing)
+		galdur.cast(_facing)
 	elif event.keycode == KEY_K and PlayerState.has_smithcraft:
-		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
 		# Offset ahead of and below the player's feet so the seed cell
 		# doesn't spawn on top of the player's own collision shape.
-		var origin := global_position + Vector2(facing * 24.0, 8.0)
-		smithcraft.cast(origin, Vector2(facing, 0.0))
+		var origin := global_position + Vector2(_facing * 24.0, 8.0)
+		smithcraft.cast(origin, Vector2(_facing, 0.0))
 	elif event.keycode == KEY_L and PlayerState.has_wizardry:
-		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
-		wizardry.cast(global_position + Vector2(facing * 24.0, 8.0), Vector2(facing, 0.0))
+		wizardry.cast(global_position + Vector2(_facing * 24.0, 8.0), Vector2(_facing, 0.0))
 	elif event.keycode == KEY_M and PlayerState.has_sorcery:
-		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
-		sorcery.cast(global_position + Vector2(facing * 24.0, 8.0), Vector2(facing, 0.0))
+		sorcery.cast(global_position + Vector2(_facing * 24.0, 8.0), Vector2(_facing, 0.0))
