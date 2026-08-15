@@ -23,6 +23,10 @@ Six Grammars) — this repo is where that design becomes an actual game.
 - Filler pixel art is in for the player, the enemy, and all world geometry
   — see "Placeholder art and the ship guard" below, including how a
   release export is made to refuse to run while it's still in place.
+- All four levels are data (`data/levels/*.json`), read by one shared
+  `LevelLoader.gd` instead of four hardcoded GDScript files — see "Level
+  design: JSON and World Loom" below, including the companion browser tool
+  for editing that JSON visually.
 - Verified by running the project headless (`godot --headless`) with
   simulated input, not just read — see "How this gets tested" below.
 
@@ -123,6 +127,64 @@ unlike every other obstacle in the slice, no undoing it either.
 `scripts/world/LevelBuilder.gd` holds the shared greybox helpers
 (`make_platform`, `make_trigger`, `make_switch`) the level scripts and
 abilities all use.
+
+## Level design: JSON and World Loom
+
+The four levels used to be four separate GDScript files, each hardcoding
+its own platforms, triggers, gates, switches, enemies, and ice fields as
+literal `Vector2` coordinates in `_ready()`. They're data now:
+`data/levels/Midgard.json` (and `Svartalfheim.json`, `Alfheim.json`,
+`Muspelheim.json`), read by the one shared `scripts/levels/LevelLoader.gd`
+that every level scene points at via its `level_path` export. Editing a
+level means editing its JSON; nothing about the GDScript changes.
+
+The JSON shape is straightforward and maps directly onto
+`LevelBuilder`'s primitives:
+
+```jsonc
+{
+  "name": "Midgard",
+  "crystal_persist_key": "Midgard",     // WorldState lookup key
+  "player_spawn": { "x": 0, "y": 260 },
+  "platforms": [ { "x": 0, "y": 300, "w": 300, "h": 40, "color": "#2e293d" } ],
+  "triggers": [
+    // action: "change_scene" (needs scene, optional one_shot)
+    // or "unlock" (needs ability)
+    { "x": 700, "y": 272, "w": 48, "h": 16, "color": "#8c6bc799",
+      "action": "change_scene", "scene": "Alfheim", "one_shot": true }
+  ],
+  "gates":    [ { "id": "midgard_gate", "x": 820, "y": 190, "w": 16, "h": 180, "color": "#4c4566" } ],
+  "switches": [ { "x": 950, "y": 288, "color": "#d16b3d", "opens_gate": "midgard_gate" } ],
+  "enemies":  [ { "x": 560, "y": 280, "patrol_min": 480, "patrol_max": 650 } ],
+  "ice_fields": [ { "x": 100, "y": 152, "cols": 6, "rows": 8 } ]
+}
+```
+
+**World Loom** is the companion visual editor for this format (linked from
+the design conversation) — a browser tool with the game's four current
+levels loaded in as starting points, not a blank canvas. Drag to place
+platforms/triggers/gates/ice-fields, click to place switches/enemies/the
+spawn point, select an object to edit its fields (including a live gate
+picker for switches, and an action/target picker for triggers), pan with
+the Pan tool, zoom with the scroll wheel. The Export panel shows the
+current level's JSON live as you edit; Import loads pasted JSON back in.
+
+There's no direct link from the browser tool to this repo's filesystem —
+copy the exported JSON out (the Export panel's "Select All to Copy"
+button also tries the clipboard directly) and either hand it back for the
+matching file in `data/levels/` to be updated, or save it there yourself.
+Refreshing the browser page does not persist anything; export before you
+navigate away from an edit you want to keep.
+
+This was verified by loading the actual page in headless Chromium
+(Playwright) and scripting a full interaction pass — placing every object
+type, dragging to move a selected object, switching levels, switching a
+trigger's action type, and round-tripping the exported JSON back through
+`JSON.parse` — with zero console or page errors, and confirmed
+headlessly in Godot afterward that the four transcribed JSON files
+produce byte-for-byte the same level layouts the old hardcoded scripts
+did (see "How this gets tested" below for the full playthrough that
+proved it).
 
 ## World state persistence
 
@@ -261,6 +323,17 @@ pass immediately after the first clears it. Real editor sessions handle
 this more gracefully on their own; it only showed up here because of the
 one-shot CLI-only workflow.
 
+World Loom (the browser-based level designer) got the equivalent
+treatment on the web side: this environment has Playwright with a
+pre-installed headless Chromium (`/opt/pw-browsers`), so rather than
+trusting the HTML/JS by eye, it was actually loaded in a real browser and
+driven through placing every object type, dragging, level-switching, and
+JSON export/import, watching for console and page errors the whole way.
+That pass is also what caught two real bugs before publishing: hit-testing
+priority didn't match visual draw order (clicking an overlap could select
+the wrong object), and the player-spawn marker — drawn frontmost of
+everything — was checked *last* in hit-testing instead of first.
+
 ## Known simplifications (expected — this is a first scaffold)
 
 - One enemy type, no ranged attacks, no death animation — contact damage
@@ -296,6 +369,12 @@ one-shot CLI-only workflow.
 - The placeholder-art guard's release-blocking path is reviewed but not
   proven — see "Placeholder art and the ship guard" above for exactly what
   was and wasn't verifiable in this environment.
+- World Loom has no direct save to this repo's filesystem (a browser
+  artifact can't write to your local files) — exporting is copy/paste,
+  not a button that updates `data/levels/*.json` for you. It also has no
+  drag-to-resize handles (resize via the numeric W/H fields instead) and
+  no undo; it's a design tool, not a replacement for checking the JSON
+  into git carefully.
 
 ## Next steps
 
@@ -313,3 +392,6 @@ Pick one:
 4. Do a real release export once, purely to confirm the placeholder-art
    guard's `quit()` path actually fires — the one piece of this session's
    work that couldn't be verified from inside this environment.
+5. Design new or reworked levels in World Loom now that it exists — it's
+   the natural place to plan out where a fifth and sixth school's worlds
+   would sit relative to the existing four before writing any GDScript.
