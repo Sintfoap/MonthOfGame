@@ -1,0 +1,34 @@
+{
+  "name": "Midgard",
+  "player_spawn": { "x": 0, "y": 260 },
+  "crystal_persist_key": "Midgard",
+  "platforms": [
+    { "x": 0, "y": 300, "w": 300, "h": 40, "color": "#2e293d" },
+    { "x": 600, "y": 300, "w": 300, "h": 40, "color": "#2e293d" },
+    { "x": 1050, "y": 300, "w": 600, "h": 40, "color": "#2e293d" }
+  ],
+  "triggers": [
+    {
+      "x": -100, "y": 272, "w": 48, "h": 16, "color": "#8c6b2e99",
+      "action": "change_scene", "scene": "Svartalfheim", "one_shot": true
+    },
+    {
+      "x": 700, "y": 272, "w": 48, "h": 16, "color": "#8c6bc799",
+      "action": "change_scene", "scene": "Alfheim", "one_shot": true
+    },
+    {
+      "x": 1200, "y": 272, "w": 48, "h": 16, "color": "#d16b3d99",
+      "action": "change_scene", "scene": "Muspelheim", "one_shot": false
+    }
+  ],
+  "gates": [
+    { "id": "midgard_gate", "x": 820, "y": 190, "w": 16, "h": 180, "color": "#4c4566" }
+  ],
+  "switches": [
+    { "x": 950, "y": 288, "color": "#d16b3d", "opens_gate": "midgard_gate" }
+  ],
+  "enemies": [
+    { "x": 560, "y": 280, "patrol_min": 480, "patrol_max": 650 }
+  ],
+  "ice_fields": []
+}

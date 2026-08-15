@@ -1,0 +1,24 @@
+{
+  "name": "Muspelheim",
+  "player_spawn": { "x": -200, "y": 260 },
+  "crystal_persist_key": "Muspelheim",
+  "platforms": [
+    { "x": 0, "y": 300, "w": 600, "h": 40, "color": "#332121" }
+  ],
+  "triggers": [
+    {
+      "x": -120, "y": 260, "w": 32, "h": 60, "color": "#d16b3de6",
+      "action": "unlock", "ability": "sorcery"
+    },
+    {
+      "x": 280, "y": 272, "w": 48, "h": 16, "color": "#8c6b2e99",
+      "action": "change_scene", "scene": "Midgard", "one_shot": false
+    }
+  ],
+  "gates": [],
+  "switches": [],
+  "enemies": [],
+  "ice_fields": [
+    { "x": 100, "y": 152, "cols": 6, "rows": 8 }
+  ]
+}
