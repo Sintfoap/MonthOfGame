@@ -35,6 +35,14 @@ func _ready() -> void:
 	sprite.position = Vector2(0, -20)
 
 
+## Called by LevelLoader right after add_child(), when the player arrives
+## through a specific door rather than a room's default player_spawn --
+## faces them the way that door's JSON says they should land.
+func set_initial_facing(f: float) -> void:
+	_facing = f
+	sprite.flip_h = _facing < 0.0
+
+
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta

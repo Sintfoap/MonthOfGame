@@ -9,10 +9,13 @@
     {
       "x": 200, "y": 260, "w": 32, "h": 60, "color": "#5ea194e6",
       "action": "unlock", "ability": "smithcraft"
-    },
+    }
+  ],
+  "doors": [
     {
-      "x": -220, "y": 272, "w": 48, "h": 16, "color": "#8c6b2e99",
-      "action": "change_scene", "scene": "Midgard", "one_shot": false
+      "id": "to_midgard", "x": -220, "y": 272, "w": 48, "h": 16, "color": "#8c6b2e99",
+      "target_room": "Midgard", "target_door": "to_svartalfheim",
+      "landing": { "x": 0, "y": 260 }, "facing": 1
     }
   ],
   "gates": [],

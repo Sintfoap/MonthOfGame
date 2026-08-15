@@ -10,6 +10,7 @@ run/main_scene="res://scenes/Midgard.tscn"
 AssetGuard="*res://scripts/AssetGuard.gd"
 PlayerState="*res://scripts/PlayerState.gd"
 WorldState="*res://scripts/WorldState.gd"
+RoomTransition="*res://scripts/RoomTransition.gd"
 
 [layer_names]
 
