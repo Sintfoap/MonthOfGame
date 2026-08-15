@@ -1,0 +1,36 @@
+{
+  "name": "Midgard-Central",
+  "player_spawn": { "x": 100, "y": 260 },
+  "crystal_persist_key": "Midgard-Central",
+  "platforms": [
+    { "x": 400, "y": 300, "w": 900, "h": 40, "color": "#2e293d" }
+  ],
+  "triggers": [],
+  "doors": [
+    {
+      "id": "to_midgard", "x": 0, "y": 272, "w": 48, "h": 16, "color": "#8c6ba599",
+      "target_room": "Midgard", "target_door": "to_midgard_central",
+      "landing": { "x": 100, "y": 260 }, "facing": 1
+    },
+    {
+      "id": "to_alfheim", "x": 320, "y": 272, "w": 48, "h": 16, "color": "#8c6bc799",
+      "target_room": "Alfheim", "target_door": "to_midgard",
+      "landing": { "x": 420, "y": 260 }, "facing": 1
+    },
+    {
+      "id": "to_midgard_east", "x": 700, "y": 272, "w": 48, "h": 16, "color": "#8c6ba599",
+      "target_room": "Midgard-East", "target_door": "to_midgard_central",
+      "landing": { "x": 800, "y": 260 }, "facing": 1
+    }
+  ],
+  "gates": [
+    { "id": "central_gate", "x": 560, "y": 190, "w": 16, "h": 180, "color": "#4c4566" }
+  ],
+  "switches": [
+    { "x": 480, "y": 288, "color": "#d16b3d", "opens_gate": "central_gate" }
+  ],
+  "enemies": [
+    { "x": 200, "y": 280, "patrol_min": 150, "patrol_max": 250 }
+  ],
+  "ice_fields": []
+}

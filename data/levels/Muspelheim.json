@@ -13,8 +13,13 @@
   ],
   "doors": [
     {
-      "id": "to_midgard", "x": 280, "y": 272, "w": 48, "h": 16, "color": "#8c6b2e99",
-      "target_room": "Midgard", "target_door": "to_muspelheim",
+      "id": "to_bifrost", "x": -260, "y": 272, "w": 48, "h": 16, "color": "#a7c9e699",
+      "target_room": "Bifrost-Span", "target_door": "to_muspelheim",
+      "landing": { "x": -40, "y": 260 }, "facing": 1
+    },
+    {
+      "id": "to_midgard_east", "x": 280, "y": 272, "w": 48, "h": 16, "color": "#8c6ba599",
+      "target_room": "Midgard-East", "target_door": "to_muspelheim",
       "landing": { "x": -200, "y": 260 }, "facing": 1
     }
   ],

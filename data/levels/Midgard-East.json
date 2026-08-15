@@ -1,0 +1,25 @@
+{
+  "name": "Midgard-East",
+  "player_spawn": { "x": 100, "y": 260 },
+  "crystal_persist_key": "Midgard-East",
+  "platforms": [
+    { "x": 300, "y": 300, "w": 700, "h": 40, "color": "#2e293d" }
+  ],
+  "triggers": [],
+  "doors": [
+    {
+      "id": "to_midgard_central", "x": 0, "y": 272, "w": 48, "h": 16, "color": "#8c6ba599",
+      "target_room": "Midgard-Central", "target_door": "to_midgard_east",
+      "landing": { "x": 100, "y": 260 }, "facing": 1
+    },
+    {
+      "id": "to_muspelheim", "x": 550, "y": 272, "w": 48, "h": 16, "color": "#d16b3d99",
+      "target_room": "Muspelheim", "target_door": "to_midgard_east",
+      "landing": { "x": 450, "y": 260 }, "facing": 1
+    }
+  ],
+  "gates": [],
+  "switches": [],
+  "enemies": [],
+  "ice_fields": []
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Bifrost-Span",
+  "player_spawn": { "x": 20, "y": 260 },
+  "crystal_persist_key": "Bifrost-Span",
+  "platforms": [
+    { "x": 0, "y": 300, "w": 220, "h": 40, "color": "#3d3d52" },
+    { "x": 480, "y": 300, "w": 220, "h": 40, "color": "#3d3d52" }
+  ],
+  "triggers": [],
+  "doors": [
+    {
+      "id": "to_alfheim", "x": -60, "y": 272, "w": 48, "h": 16, "color": "#8c6bc799",
+      "target_room": "Alfheim", "target_door": "to_bifrost",
+      "landing": { "x": 20, "y": 260 }, "facing": 1
+    },
+    {
+      "id": "to_muspelheim", "x": 540, "y": 272, "w": 48, "h": 16, "color": "#d16b3d99",
+      "target_room": "Muspelheim", "target_door": "to_bifrost",
+      "landing": { "x": 460, "y": 260 }, "facing": 1
+    }
+  ],
+  "gates": [],
+  "switches": [],
+  "enemies": [],
+  "ice_fields": []
+}

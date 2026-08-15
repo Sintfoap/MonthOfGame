@@ -3,7 +3,7 @@
   "player_spawn": { "x": -150, "y": 260 },
   "crystal_persist_key": "Alfheim",
   "platforms": [
-    { "x": 0, "y": 300, "w": 550, "h": 40, "color": "#292938" }
+    { "x": -25, "y": 300, "w": 600, "h": 40, "color": "#292938" }
   ],
   "triggers": [
     {
@@ -13,16 +13,21 @@
   ],
   "doors": [
     {
+      "id": "to_bifrost", "x": -280, "y": 272, "w": 48, "h": 16, "color": "#a7c9e699",
+      "target_room": "Bifrost-Span", "target_door": "to_alfheim",
+      "landing": { "x": -220, "y": 260 }, "facing": 1
+    },
+    {
       "id": "to_midgard", "x": 250, "y": 272, "w": 48, "h": 16, "color": "#8c6b2e99",
-      "target_room": "Midgard", "target_door": "to_alfheim",
+      "target_room": "Midgard-Central", "target_door": "to_alfheim",
       "landing": { "x": -150, "y": 260 }, "facing": 1
     }
   ],
   "gates": [
-    { "id": "alfheim_gate", "x": 20, "y": 190, "w": 16, "h": 180, "color": "#4c4566" }
+    { "id": "alfheim_gate", "x": 150, "y": 190, "w": 16, "h": 180, "color": "#4c4566" }
   ],
   "switches": [
-    { "x": 150, "y": 288, "color": "#8c6bc7", "opens_gate": "alfheim_gate" }
+    { "x": 20, "y": 288, "color": "#8c6bc7", "opens_gate": "alfheim_gate" }
   ],
   "enemies": [],
   "ice_fields": []

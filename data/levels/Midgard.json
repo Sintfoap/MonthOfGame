@@ -4,8 +4,7 @@
   "crystal_persist_key": "Midgard",
   "platforms": [
     { "x": 0, "y": 300, "w": 300, "h": 40, "color": "#2e293d" },
-    { "x": 600, "y": 300, "w": 300, "h": 40, "color": "#2e293d" },
-    { "x": 1050, "y": 300, "w": 600, "h": 40, "color": "#2e293d" }
+    { "x": 600, "y": 300, "w": 300, "h": 40, "color": "#2e293d" }
   ],
   "triggers": [],
   "doors": [
@@ -15,22 +14,13 @@
       "landing": { "x": 0, "y": 260 }, "facing": 1
     },
     {
-      "id": "to_alfheim", "x": 700, "y": 272, "w": 48, "h": 16, "color": "#8c6bc799",
-      "target_room": "Alfheim", "target_door": "to_midgard",
-      "landing": { "x": 745, "y": 260 }, "facing": 1
-    },
-    {
-      "id": "to_muspelheim", "x": 1200, "y": 272, "w": 48, "h": 16, "color": "#d16b3d99",
-      "target_room": "Muspelheim", "target_door": "to_midgard",
-      "landing": { "x": 1250, "y": 260 }, "facing": 1
+      "id": "to_midgard_central", "x": 700, "y": 272, "w": 48, "h": 16, "color": "#8c6ba599",
+      "target_room": "Midgard-Central", "target_door": "to_midgard",
+      "landing": { "x": 100, "y": 260 }, "facing": 1
     }
   ],
-  "gates": [
-    { "id": "midgard_gate", "x": 820, "y": 190, "w": 16, "h": 180, "color": "#4c4566" }
-  ],
-  "switches": [
-    { "x": 950, "y": 288, "color": "#d16b3d", "opens_gate": "midgard_gate" }
-  ],
+  "gates": [],
+  "switches": [],
   "enemies": [
     { "x": 560, "y": 280, "patrol_min": 480, "patrol_max": 650 }
   ],
