@@ -12,6 +12,7 @@ signal died
 @onready var galdur: Node2D = $GaldurAbility
 @onready var smithcraft: Node = $SmithcraftAbility
 @onready var wizardry: Node = $WizardryAbility
+@onready var sorcery: Node = $SorceryAbility
 
 var health := MAX_HEALTH
 var _invulnerable_timer := 0.0
@@ -80,3 +81,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.keycode == KEY_L and PlayerState.has_wizardry:
 		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
 		wizardry.cast(global_position + Vector2(facing * 24.0, 8.0), Vector2(facing, 0.0))
+	elif event.keycode == KEY_M and PlayerState.has_sorcery:
+		var facing := 1.0 if sprite.scale.x >= 0.0 else -1.0
+		sorcery.cast(global_position + Vector2(facing * 24.0, 8.0), Vector2(facing, 0.0))

@@ -5,18 +5,21 @@ automaton. Design background and interactive prototypes for all six schools
 live in the linked artifacts from the design conversation (Sigil Loom, then
 Six Grammars) — this repo is where that design becomes an actual game.
 
-## Status: vertical slice, 3 of 6 schools playable, first combat (both ways)
+## Status: vertical slice, 4 of 6 schools playable, first combat (both ways)
 
 - **Godot 4.x**, GDScript, 2D.
-- **Galdur** (rune-ring), **Smithcraft** (ore-vein), and **Wizardry**
-  (wandering mote) are implemented as real gameplay, running the same
-  automata as the prototypes.
-- **Sorcery, Seiðr, Hamr** are designed (see the artifacts) but not yet
-  built into the game.
+- **Galdur** (rune-ring), **Smithcraft** (ore-vein), **Wizardry** (wandering
+  mote), and **Sorcery** (spreading fire) are implemented as real gameplay,
+  running the same automata as the prototypes.
+- **Seiðr, Hamr** are designed (see the artifacts) but not yet built into
+  the game.
 - First enemy, contact damage, and a real collision-layer setup (World /
   Player / Enemy / Hazard) — see "Combat and collision layers" below.
-  Wizardry now damages enemies as well as switches, so the player has an
-  actual offense, not just Galdur's wall.
+  Wizardry damages enemies as well as switches, so the player has an actual
+  offense, not just Galdur's wall.
+- Player-built structures (currently just Smithcraft's crystal veins)
+  persist across leaving and returning to a level — see "World state
+  persistence" below.
 - Art is placeholder greybox geometry — flat-colored rectangles, no sprites
   yet. Godot 4 was chosen for the 2D metroidvania toolchain; pixel art is
   the target style once an art pass starts.
@@ -37,6 +40,7 @@ It boots into **Midgard**.
 | Cast Galdur | J |
 | Cast Smithcraft | K (once unlocked) |
 | Cast Wizardry | L (once unlocked) |
+| Cast Sorcery | M (once unlocked) |
 
 ## The vertical slice
 
@@ -49,12 +53,20 @@ to Midgard to grow a crystal bridge across the gap.
 
 Once across, a patrolling enemy sits between the bridge landing and the
 trigger to **Alfheim** — the first real use for Galdur's ward as a wall, not
-just a stepping-stone (see below). Alfheim's altar grants Wizardry, and its
-gate is taller than the player's max jump — the only way past it is casting
+just a stepping-stone. Alfheim's altar grants Wizardry, and its gate is
+taller than the player's max jump — the only way past it is casting
 Wizardry to land the mote on a switch on the far side, something no amount
 of walking or jumping can do.
 
-## How the three implemented schools work
+Past that same trigger back in Midgard, a second Wizardry-gated wall blocks
+a third platform leading to **Muspelheim**. Its altar grants Sorcery, and
+the way back out is blocked by a solid field of ice — not a gate, an actual
+wall of frost that has to be melted. Casting Sorcery on it ignites a small
+seed that spreads fire cell to cell through the whole field on its own,
+clearing it permanently once it catches. There's no walking around it and,
+unlike every other obstacle in the slice, no undoing it either.
+
+## How the four implemented schools work
 
 - **Galdur** (`scripts/abilities/Galdur.gd`) runs the elementary
   cellular-automaton ring from the prototype (Rule 30, wrapped in a circle).
@@ -74,7 +86,8 @@ of walking or jumping can do.
   spawn near the cast point and drift until they touch the vein, then stick
   as permanent `CrystalCell` platforms. The vein persists between casts, so
   returning to grow it again extends the same structure rather than
-  starting over.
+  starting over — and, since the World State Persistence fix, across
+  leaving and re-entering the level entirely.
 - **Wizardry** (`scripts/abilities/Wizardry.gd`) runs a mobile automaton
   (turmite): the mote marks each cell it crosses, and only turns if it
   lands on a cell it's already marked. In practice, across open lattice it
@@ -89,10 +102,53 @@ of walking or jumping can do.
   player's own body can't get through. Each enemy can only be hit once per
   cast (tracked per-cast, not a cooldown) so a slow-moving target doesn't
   eat two hits from consecutive steps of the same shot.
+- **Sorcery** (`scripts/abilities/Sorcery.gd`, terrain in
+  `scripts/world/IceField.gd`) is the odd one out: casting it doesn't grow
+  or draw anything on the caster's end at all, it just ignites the nearest
+  `IceField`. The spreading *is* the automaton, and it runs entirely inside
+  the terrain object once lit, with no further input — matching the
+  design's "self-propagating, no upkeep once it catches." Each ice cell has
+  three states: Ice (solid), Fire (solid, transitional), Cleared (removed).
+  Ice becomes Fire the moment *any* neighbor is Fire — genuine
+  neighbor-driven cellular spread, one contact is enough, this school is
+  meant to catch fast. Fire becomes Cleared after a fixed number of steps,
+  regardless of neighbors. That second rule is deliberately *not*
+  neighbor-counted the way the first one is: a field that starts entirely
+  uniform (all Ice) has no Cleared cells anywhere to count against, so a
+  neighbor-based rule for that transition would never fire — permanent
+  deadlock, verified by hand-tracing it before it went anywhere near the
+  engine. Time-based sidesteps that entirely and still reads as "it burned
+  out," not like a different mechanism bolted on.
 
 `scripts/world/LevelBuilder.gd` holds the shared greybox helpers
 (`make_platform`, `make_trigger`, `make_switch`) the level scripts and
 abilities all use.
+
+## World state persistence
+
+`scripts/WorldState.gd` (autoload) is a small in-memory record of
+player-built structures, keyed by level name — currently just Smithcraft's
+crystal cells. It exists because of something headless testing caught
+while building Muspelheim: reaching it requires a round trip through
+Alfheim first (to get Wizardry), and `change_scene_to_file` fully tears
+down and frees the previous scene on every transition. Without persistence,
+that meant a fully-built Smithcraft bridge in Midgard vanished the instant
+the player stepped into Alfheim and came back — not a hypothetical, a
+scripted test showed the crystal count go from 20 to 0 across exactly that
+round trip. Since reaching Muspelheim *requires* that round trip, this
+would have made the new content effectively unreachable through normal
+play, not just inconvenient.
+
+The fix: `Smithcraft.gd` records every cell it places into `WorldState`
+keyed by the current level's name, and restores its own internal tracking
+from it in `_ready()`. Each level's `_ready()` separately asks
+`WorldState` for that level's cells and spawns them instantly (no growth
+animation — the structure already exists, it's just being redrawn). This
+is still in-memory only, not a save-to-disk system; it survives scene
+transitions within one play session, not closing and reopening the game.
+It also only covers Smithcraft right now — nothing else in the game
+currently builds persistent structures the same way, but if one does
+later, the same pattern applies.
 
 ## Combat and collision layers
 
@@ -108,8 +164,8 @@ Physics layers are named in `project.godot` and used explicitly everywhere
 (`LevelBuilder.LAYER_WORLD/PLAYER/ENEMY/HAZARD`) rather than left on Godot's
 default layer 1 for everything:
 
-- **World** (project layer 1) — platforms, gates, crystal cells, Galdur
-  wards. Nothing monitors anything; it's just solid.
+- **World** (project layer 1) — platforms, gates, crystal cells, ice
+  fields, Galdur wards. Nothing monitors anything; it's just solid.
 - **Player** (layer 2) — collides with World and Enemy, so an enemy's body
   physically blocks the player too, not just the reverse.
 - **Enemy** (layer 3) — collides with World only. It doesn't need to react
@@ -121,7 +177,12 @@ This also made the level triggers stricter: `make_trigger`'s Area2D now has
 `collision_mask = LAYER_PLAYER` instead of the default (which was every
 body on layer 1 — including the ground platform the trigger sits on top
 of, the original cause of the self-firing scene-swap loop). The body-type
-check added for that fix stays too, as a second line of defense.
+check added for that fix stays too, as a second line of defense. World-entry
+triggers (the ones that call `change_scene_to_file`) also now guard
+themselves with a local one-shot flag — added when a second Wizardry-gated
+area was placed *past* the Alfheim trigger in Midgard, since without it,
+walking back across that trigger to reach the new area would just pull the
+player into Alfheim again every time.
 
 ## How this gets tested
 
@@ -129,29 +190,34 @@ There's no display in the environment these were built in, so bugs get
 caught by running Godot headless (`godot --headless --path . <scene>
 --quit-after N`) with a temporary autoloaded driver script that injects
 real input events (`Input.parse_input_event`, `Input.action_press`) and
-prints state — not just static code review. That's how the trigger
-self-firing loop, the Smithcraft spawn-on-player pop, the fact that
-Galdur's ward could never actually block anything, and Wizardry's
-enemy-hit radius being too tight to reliably land (the mote travels 8px
-below the caster's feet, an enemy's `global_position` is at *its* feet, and
-that vertical gap plus 16px grid-quantized horizontal steps pushed the
-worst-case combined distance past the original 10px radius) all got caught
-before being handed back — none of them were visible from reading the code
-alone, only from watching numbers move against a scripted scenario. The
-driver script itself is never committed; if you're picking up this
-pattern, add it under `scripts/test/`, wire it as a temporary autoload in
-`project.godot`, and remove both before committing. For a level-geometry
-test that isn't one of the three real scenes, add a throwaway scene the
-same way and delete it afterward too.
+prints state — not just static code review, and not just "does it run,"
+but scripted scenarios that walk a simulated player through the actual
+sequence a real playthrough would follow. That's how the trigger
+self-firing loop, the Smithcraft spawn-on-player pop, Galdur's ward never
+being able to block anything, Wizardry's enemy-hit radius being too tight
+to reliably land, and the crystal-bridge-vanishing-on-scene-change bug
+above all got caught before being handed back — none of them were visible
+from reading the code alone, only from watching state change against a
+scripted scenario. The driver script itself is never committed; if you're
+picking up this pattern, add it under `scripts/test/`, wire it as a
+temporary autoload in `project.godot`, and remove both before committing.
+For a level-geometry test that isn't one of the real scenes, add a
+throwaway scene the same way and delete it afterward too.
 
 ## Known simplifications (expected — this is a first scaffold)
 
 - One enemy type, no ranged attacks, no death animation — contact damage
   and a color flash only.
 - On player death, the current scene just reloads — no death screen, no
-  checkpoint beyond "start of this scene."
+  checkpoint beyond "start of this scene." Since Smithcraft structures now
+  persist, a bridge already built survives a death-reload too.
 - Respawn point on scene load is fixed, not the point you left from.
-- No save/persistence system.
+- No save/persistence to disk — `WorldState` only survives within one
+  running session, and only tracks Smithcraft's crystal cells; a dead
+  enemy or an already-melted ice field, for instance, is not remembered if
+  you leave and come back (an enemy respawns, an ice field regenerates as
+  solid ice). Only the one persistence gap that actually blocked reaching
+  new content has been fixed so far, not persistence in general.
 - No custom input map — movement uses Godot's built-in `ui_left` /
   `ui_right` / `ui_accept` actions; casting reads raw key events directly,
   so there's nothing to remap yet.
@@ -166,15 +232,22 @@ same way and delete it afterward too.
   within a very small range — a real gap, not just an artifact of the
   tight test scenario that found it, but low priority since the actual
   in-game enemy patrols across a much wider range than that edge case.
+- Sorcery has no way to be aimed away from the nearest IceField or scoped
+  to "just this part of it" — `cast()` ignites every IceField in the
+  scene. Fine while each level only ever has one, not fine the moment a
+  level has two and the player only meant to light one.
 
 ## Next steps
 
 Pick one:
-1. Build a fourth school (Sorcery's cyclic automaton would be the biggest
-   visual departure so far — spreading terrain transmutation instead of a
-   single ability-gate payoff).
-2. Start the pixel-art pass on the player, the three worlds, and the enemy.
+1. Build a fifth school (Seiðr's voter-model consensus would be the first
+   non-physical output in the game — information/curse instead of
+   traversal, structure, or damage).
+2. Start the pixel-art pass on the player, the four worlds, and the enemy.
 3. Add a second enemy type or a ranged attack, now that there's a working
    damage pipeline (Hazard layer for enemies hitting the player, group +
    `take_damage()` for the player hitting enemies) to build more encounters
    on top of.
+4. Extend `WorldState` persistence to cover more than Smithcraft — enemy
+   deaths and melted ice fields are the two known gaps, and both would
+   matter more as soon as a player can double back through more of the map.

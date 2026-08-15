@@ -4,7 +4,9 @@ extends Node
 ## "Six Grammars" prototype's Ore-Vein. Motes spawn near the cast point and
 ## random-walk until they touch the vein, then stick permanently as solid
 ## CrystalCell platforms. The vein persists between casts — walking back and
-## casting again grows it further from where it already stands.
+## casting again grows it further from where it already stands. It also
+## persists across leaving and returning to the level entirely, restored
+## from WorldState -- a scene reload used to wipe it out completely.
 
 const CELL_SIZE := 16.0
 const MAX_WALKERS := 24
@@ -19,10 +21,15 @@ var _timer := 0.0
 var _world: Node = null
 
 
+func _ready() -> void:
+	_world = get_tree().current_scene
+	for cell in WorldState.get_crystals(_world.name):
+		_crystal[cell] = true
+
+
 func cast(world_pos: Vector2, direction: Vector2) -> void:
 	if _active or _crystal.size() >= MAX_CELLS:
 		return
-	_world = get_tree().current_scene
 
 	var origin := _to_grid(world_pos)
 	if not _crystal.has(origin):
@@ -75,7 +82,5 @@ func _touching_crystal(cell: Vector2i) -> bool:
 
 
 func _spawn_cell(cell: Vector2i) -> void:
-	var body := CrystalCell.new()
-	body.position = Vector2(cell.x * CELL_SIZE, cell.y * CELL_SIZE)
-	body.setup(CELL_SIZE)
-	_world.add_child(body)
+	CrystalCell.spawn_at(_world, cell, CELL_SIZE)
+	WorldState.record_crystal(_world.name, cell)

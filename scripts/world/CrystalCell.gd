@@ -5,6 +5,14 @@ extends StaticBody2D
 ## aggregation in Smithcraft.gd — never placed by hand.
 
 
+static func spawn_at(parent: Node, cell: Vector2i, cell_size: float) -> CrystalCell:
+	var body := CrystalCell.new()
+	body.position = Vector2(cell.x * cell_size, cell.y * cell_size)
+	body.setup(cell_size)
+	parent.add_child(body)
+	return body
+
+
 func setup(cell_size: float) -> void:
 	collision_layer = LevelBuilder.LAYER_WORLD
 	collision_mask = 0
